@@ -176,40 +176,30 @@ func TestDocument_TermFrequency(t *testing.T) {
 }
 
 func TestTfIdf_InverseDocumentFrequency(t *testing.T) {
-	type fields struct {
-		documents map[string]Document
-		stopWords map[string]bool
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		term   string
-		want   float64
+		name      string
+		documents map[string]Document
+		term      string
+		want      float64
 	}{
 		{
-			name: "'this' inverse document frequency",
-			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
-			},
-			term: "this",
-			want: 0,
+			name:      "'this' inverse document frequency",
+			documents: docs,
+			term:      "this",
+			want:      0,
 		},
 		{
-			name: "'example' inverse document frequency",
-			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
-			},
-			term: "example",
-			want: 0.3010299956639812,
+			name:      "'example' inverse document frequency",
+			documents: docs,
+			term:      "example",
+			want:      0.3010299956639812,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{
-				documents: tt.fields.documents,
-				stopWords: tt.fields.stopWords,
+				documents: tt.documents,
+				stopWords: make(map[string]bool, 0),
 			}
 			if got := i.InverseDocumentFrequency(tt.term); got != tt.want {
 				t.Errorf("InverseDocumentFrequency() = %v, want %v", got, tt.want)

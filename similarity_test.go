@@ -17,6 +17,11 @@ func TestCosineComparator(t *testing.T) {
 			want: 0.4743416490252569,
 		},
 		{
+			vec1: []float64{1, 1, 1, 1, 0, 1, 1, 2},
+			vec2: []float64{1, 0, 0, 1, 1, 0, 1},
+			want: 0.4743416490252569,
+		},
+		{
 			vec1: []float64{3, 4},
 			vec2: []float64{4, 3},
 			want: 0.96,
