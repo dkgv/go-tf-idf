@@ -16,7 +16,6 @@ var doc1Freq = map[string]float64{
 var tokens1 = []string{"this", "is", "a", "sample"}
 var tokenCount1 = 5
 var doc1 = Document{Frequency: doc1Freq, UniqueTokens: tokens1, TotalTokenCount: tokenCount1}
-var vec1 = []float64{0, 0, 0, 0, 0.2, 0.2, 0.4, 0.2}
 
 var doc2Hash = "271559ec25268bb9bb2ad7fd8b4cf71a"
 var doc2Content = "this is another another example example example"
@@ -29,63 +28,34 @@ var doc2Freq = map[string]float64{
 var tokens2 = []string{"this", "is", "another", "example"}
 var tokenCount2 = 7
 var doc2 = Document{Frequency: doc2Freq, UniqueTokens: tokens2, TotalTokenCount: tokenCount2}
-var vec2 = []float64{0, 0, 0, 0, 0.14285714285714285, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855}
 
 var docs = map[string]Document{doc1Hash: doc1, doc2Hash: doc2}
 
-func TestTfIdf_Comparator(t *testing.T) {
+func TestDocument_GetVectors(t *testing.T) {
 	tests := []struct {
-		name       string
-		comparator Comparator
-		vec1       []float64
-		vec2       []float64
-		want       float64
+		name  string
+		doc   Document
+		other Document
+		want1 []float64
+		want2 []float64
 	}{
 		{
-			name:       "Cosine",
-			comparator: CosineComparator,
-			vec1:       vec1,
-			vec2:       vec2,
-			want:       0.8783100656536795,
-		},
-		{
-			name:       "Cosine",
-			comparator: CosineComparator,
-			vec1:       []float64{3, 4},
-			vec2:       []float64{4, 3},
-			want:       0.96,
+			name:  "vector from doc0 and doc1",
+			doc:   doc1,
+			other: doc2,
+			want1: []float64{0.2, 0.2, 0.4, 0.2, 0, 0},
+			want2: []float64{0.14285714285714285, 0.14285714285714285, 0, 0, 0.2857142857142857, 0.42857142857142855},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.comparator(tt.vec1, tt.vec2); got != tt.want {
-				t.Errorf("Compare() = %v, want %v", got, tt.want)
+			got1, got2 := tt.doc.GetVectors(tt.other)
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("vec1 = %v, want %v", got1, tt.want1)
 			}
-		})
-	}
-}
 
-func TestDocument_ToVector(t *testing.T) {
-	tests := []struct {
-		name string
-		doc  Document
-		want []float64
-	}{
-		{
-			name: "doc1 = vec1",
-			doc:  doc1,
-			want: vec1,
-		},
-		{
-			name: "doc2 = vec2",
-			doc:  doc2,
-			want: vec2,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.doc.ToVector(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ToVector() = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got2, tt.want2) {
+				t.Errorf("vec2 = %v, want %v", got2, tt.want2)
 			}
 		})
 	}

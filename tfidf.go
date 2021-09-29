@@ -20,12 +20,32 @@ func (d Document) TermFrequency(term string) float64 {
 	return d.Frequency[term] / (float64)(d.TotalTokenCount)
 }
 
-func (d Document) ToVector() []float64 {
-	vector := make([]float64, len(d.Frequency))
-	for _, term := range d.UniqueTokens {
-		vector = append(vector, d.TermFrequency(term))
+func (d Document) GetVectors(other Document) ([]float64, []float64) {
+	visited := make(map[string]bool, 0)
+	terms := make([]string, 0)
+	for _, token := range d.UniqueTokens {
+		if _, ok := visited[token]; !ok {
+			terms = append(terms, token)
+			visited[token] = true
+		}
 	}
-	return vector
+	for _, token := range other.UniqueTokens {
+		if _, ok := visited[token]; !ok {
+			terms = append(terms, token)
+			visited[token] = true
+		}
+	}
+
+	vector1 := make([]float64, len(visited))
+	vector2 := make([]float64, len(visited))
+	index := 0
+	for _, term := range terms {
+		vector1[index] = d.TermFrequency(term)
+		vector2[index] = other.TermFrequency(term)
+		index += 1
+	}
+
+	return vector1, vector2
 }
 
 type TfIdf struct {
@@ -53,8 +73,7 @@ func (i TfIdf) Compare(document1, document2 string, comparator Comparator) (floa
 		return 0, errors.New("cannot compare with nil document")
 	}
 
-	vector1 := doc1.ToVector()
-	vector2 := doc2.ToVector()
+	vector1, vector2 := doc1.GetVectors(*doc2)
 	return comparator(vector1, vector2), nil
 }
 
@@ -69,7 +88,7 @@ func (i TfIdf) GetDocument(document string) *Document {
 func (i TfIdf) InverseDocumentFrequency(term string) float64 {
 	tf := float64(0)
 	for _, document := range i.documents {
-		if document.TermFrequency(term) != 0 {
+		if _, ok := document.Frequency[term]; ok {
 			tf++
 		}
 	}
@@ -103,6 +122,7 @@ func (i TfIdf) AddDocument(document string) {
 		if _, ok := i.stopWords[token]; ok {
 			continue
 		}
+
 		frequency[token]++
 
 		if frequency[token] == 1 {
