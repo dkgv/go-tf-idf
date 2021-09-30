@@ -53,20 +53,24 @@ type TfIdf struct {
 	StopWords map[string]bool
 }
 
-func New(documents []string) *TfIdf {
-	tfidf := TfIdf{
+func New() *TfIdf {
+	return &TfIdf{
 		Documents: make(map[string]Document),
 		StopWords: make(map[string]bool),
 	}
+}
+
+func NewWithDefaultStopWords() *TfIdf {
+	tfidf := New()
+	tfidf.StopWords = StopWords
+	return tfidf
+}
+
+func NewWithDocuments(documents []string) *TfIdf {
+	tfidf := New()
 	for _, document := range documents {
 		tfidf.AddDocument(document)
 	}
-	return &tfidf
-}
-
-func NewWithStopWords(documents []string) *TfIdf {
-	tfidf := New(documents)
-	tfidf.StopWords = StopWords
 	return tfidf
 }
 

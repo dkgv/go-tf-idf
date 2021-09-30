@@ -17,7 +17,7 @@ func main() {
 	// Initializing a tf-idf container 
 	doc1 := "this is a document"
 	doc2 := "and this is another document"
-	tfidf := go_tf_idf.New([]string{
+	tfidf := go_tf_idf.NewWithDocuments([]string{
 		doc1,
 		doc2,
 	})

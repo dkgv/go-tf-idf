@@ -349,7 +349,7 @@ func Test_md5Hash(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	i := New([]string{
+	i := NewWithDocuments([]string{
 		doc1Content, doc2Content,
 	})
 	if len(i.Documents) != 2 {
