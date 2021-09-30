@@ -49,19 +49,25 @@ func (d Document) GetVectors(other Document) ([]float64, []float64) {
 }
 
 type TfIdf struct {
-	documents map[string]Document
-	stopWords map[string]bool
+	Documents map[string]Document
+	StopWords map[string]bool
 }
 
 func New(documents []string) *TfIdf {
 	tfidf := TfIdf{
-		documents: make(map[string]Document),
-		stopWords: make(map[string]bool),
+		Documents: make(map[string]Document),
+		StopWords: make(map[string]bool),
 	}
 	for _, document := range documents {
 		tfidf.AddDocument(document)
 	}
 	return &tfidf
+}
+
+func NewWithStopWords(documents []string) *TfIdf {
+	tfidf := New(documents)
+	tfidf.StopWords = StopWords
+	return tfidf
 }
 
 type Comparator func(vector1, vector2 []float64) float64
@@ -79,7 +85,7 @@ func (i TfIdf) Compare(document1, document2 string, comparator Comparator) (floa
 
 func (i TfIdf) GetDocument(document string) *Document {
 	hash := md5Hash(document)
-	if doc, ok := i.documents[hash]; ok {
+	if doc, ok := i.Documents[hash]; ok {
 		return &doc
 	}
 	return nil
@@ -87,13 +93,13 @@ func (i TfIdf) GetDocument(document string) *Document {
 
 func (i TfIdf) InverseDocumentFrequency(term string) float64 {
 	tf := float64(0)
-	for _, document := range i.documents {
+	for _, document := range i.Documents {
 		if _, ok := document.Frequency[term]; ok {
 			tf++
 		}
 	}
 
-	numerator := (float64)(len(i.documents))
+	numerator := (float64)(len(i.Documents))
 	return math.Log10(numerator / tf)
 }
 
@@ -107,7 +113,7 @@ func (i TfIdf) TermFrequencyInverseDocumentFrequency(term string, document strin
 
 func (i TfIdf) AddDocument(document string) {
 	hash := md5Hash(document)
-	if _, ok := i.documents[hash]; ok {
+	if _, ok := i.Documents[hash]; ok {
 		return
 	}
 
@@ -119,7 +125,7 @@ func (i TfIdf) AddDocument(document string) {
 	frequency := make(map[string]float64, len(tokens))
 	uniqueTokens := make([]string, 0)
 	for _, token := range tokens {
-		if _, ok := i.stopWords[token]; ok {
+		if _, ok := i.StopWords[token]; ok {
 			continue
 		}
 
@@ -130,7 +136,7 @@ func (i TfIdf) AddDocument(document string) {
 		}
 	}
 
-	i.documents[hash] = Document{
+	i.Documents[hash] = Document{
 		Frequency:       frequency,
 		UniqueTokens:    uniqueTokens,
 		TotalTokenCount: len(tokens),
@@ -138,7 +144,7 @@ func (i TfIdf) AddDocument(document string) {
 }
 
 func (i TfIdf) AddStopWord(word string) {
-	i.stopWords[word] = true
+	i.StopWords[word] = true
 }
 
 func md5Hash(s string) string {

@@ -85,7 +85,7 @@ func TestTfIdf_GetDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{documents: docs}
+			i := TfIdf{Documents: docs}
 			if got := i.GetDocument(tt.getDocument); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetDocument() = %v, want %v", got, tt.want)
 			}
@@ -168,8 +168,8 @@ func TestTfIdf_InverseDocumentFrequency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{
-				documents: tt.documents,
-				stopWords: make(map[string]bool, 0),
+				Documents: tt.documents,
+				StopWords: make(map[string]bool, 0),
 			}
 			if got := i.InverseDocumentFrequency(tt.term); got != tt.want {
 				t.Errorf("InverseDocumentFrequency() = %v, want %v", got, tt.want)
@@ -257,8 +257,8 @@ func TestTfIdf_TermFrequencyInverseDocumentFrequency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{
-				documents: tt.fields.documents,
-				stopWords: tt.fields.stopWords,
+				Documents: tt.fields.documents,
+				StopWords: tt.fields.stopWords,
 			}
 			if got := i.TermFrequencyInverseDocumentFrequency(tt.args.term, tt.args.document); got != tt.want {
 				t.Errorf("TermFrequencyInverseDocumentFrequency() = %v, want %v", got, tt.want)
@@ -291,12 +291,12 @@ func TestTfIdf_AddDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{documents: make(map[string]Document)}
+			i := TfIdf{Documents: make(map[string]Document)}
 			for _, document := range tt.documents {
 				i.AddDocument(document)
 			}
 
-			if got := len(i.documents); got != tt.wantNumDocs {
+			if got := len(i.Documents); got != tt.wantNumDocs {
 				t.Errorf("len(documents) = %v, want %v", got, tt.wantNumDocs)
 			}
 		})
@@ -325,7 +325,7 @@ func TestTfIdf_Compare(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{documents: tt.documents}
+			i := TfIdf{Documents: tt.documents}
 			result, err := i.Compare(tt.doc1, tt.doc2, CosineComparator)
 			if err != tt.wantErr {
 				t.Errorf("got err %v, want %v", err, tt.wantErr)
@@ -352,7 +352,7 @@ func TestNew(t *testing.T) {
 	i := New([]string{
 		doc1Content, doc2Content,
 	})
-	if len(i.documents) != 2 {
+	if len(i.Documents) != 2 {
 		t.Error("invalid # of docs")
 	}
 }
