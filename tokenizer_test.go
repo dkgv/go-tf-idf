@@ -46,6 +46,31 @@ func TestTokenize(t *testing.T) {
 			s:    ".",
 			want: []string{},
 		},
+		{
+			name: "One colon",
+			s:    ":",
+			want: []string{},
+		},
+		{
+			name: "One semicolon",
+			s:    ";",
+			want: []string{},
+		},
+		{
+			name: "One (",
+			s:    "(",
+			want: []string{},
+		},
+		{
+			name: "One )",
+			s:    ")",
+			want: []string{},
+		},
+		{
+			name: "One /",
+			s:    "a/b",
+			want: []string{"a", "b"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

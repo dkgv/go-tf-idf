@@ -6,5 +6,10 @@ func Tokenize(s string) []string {
 	s = strings.ToLower(s)
 	s = strings.ReplaceAll(s, ".", " ")
 	s = strings.ReplaceAll(s, ",", " ")
+	s = strings.ReplaceAll(s, ":", " ")
+	s = strings.ReplaceAll(s, ";", " ")
+	s = strings.ReplaceAll(s, "(", "")
+	s = strings.ReplaceAll(s, ")", "")
+	s = strings.ReplaceAll(s, "/", " ")
 	return strings.Fields(s)
 }
