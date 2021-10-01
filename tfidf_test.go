@@ -169,7 +169,7 @@ func TestTfIdf_InverseDocumentFrequency(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{
 				Documents: tt.documents,
-				StopWords: make(map[string]bool, 0),
+				StopWords: NewEmptyStopWords(),
 			}
 			if got := i.InverseDocumentFrequency(tt.term); got != tt.want {
 				t.Errorf("InverseDocumentFrequency() = %v, want %v", got, tt.want)
@@ -258,7 +258,7 @@ func TestTfIdf_TermFrequencyInverseDocumentFrequency(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{
 				Documents: tt.fields.documents,
-				StopWords: tt.fields.stopWords,
+				StopWords: NewEmptyStopWords(),
 			}
 			if got := i.TermFrequencyInverseDocumentFrequency(tt.args.term, tt.args.document); got != tt.want {
 				t.Errorf("TermFrequencyInverseDocumentFrequency() = %v, want %v", got, tt.want)
@@ -291,7 +291,7 @@ func TestTfIdf_AddDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{Documents: make(map[string]Document)}
+			i := TfIdf{Documents: make(map[string]Document), StopWords: NewEmptyStopWords()}
 			for _, document := range tt.documents {
 				i.AddDocument(document)
 			}
@@ -348,7 +348,7 @@ func Test_md5Hash(t *testing.T) {
 	}
 }
 
-func TestNew(t *testing.T) {
+func TestNewWithDocuments(t *testing.T) {
 	i := NewWithDocuments([]string{
 		doc1Content, doc2Content,
 	})

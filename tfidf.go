@@ -50,19 +50,19 @@ func (d Document) GetVectors(other Document) ([]float64, []float64) {
 
 type TfIdf struct {
 	Documents map[string]Document
-	StopWords map[string]bool
+	StopWords *StopWords
 }
 
 func New() *TfIdf {
 	return &TfIdf{
 		Documents: make(map[string]Document),
-		StopWords: make(map[string]bool),
+		StopWords: NewEmptyStopWords(),
 	}
 }
 
 func NewWithDefaultStopWords() *TfIdf {
 	tfidf := New()
-	tfidf.StopWords = StopWords
+	tfidf.StopWords.List = DefaultList
 	return tfidf
 }
 
@@ -129,7 +129,7 @@ func (i TfIdf) AddDocument(document string) {
 	frequency := make(map[string]float64, len(tokens))
 	uniqueTokens := make([]string, 0)
 	for _, token := range tokens {
-		if _, ok := i.StopWords[token]; ok {
+		if i.StopWords.Matches(token) {
 			continue
 		}
 
@@ -145,10 +145,6 @@ func (i TfIdf) AddDocument(document string) {
 		UniqueTokens:    uniqueTokens,
 		TotalTokenCount: len(tokens),
 	}
-}
-
-func (i TfIdf) AddStopWord(word string) {
-	i.StopWords[word] = true
 }
 
 func md5Hash(s string) string {
