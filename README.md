@@ -1,4 +1,5 @@
 # go-tf-idf
+[![Coverage Status](https://coveralls.io/repos/github/dkgv/go-tf-idf/badge.svg?branch=master)](https://coveralls.io/github/dkgv/go-tf-idf?branch=master)
 
 A small Go implementation of [tf-idf](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) (term frequency-inverse document frequency) with support for comparing documents using [cosine similarities](https://en.wikipedia.org/wiki/Cosine_similarity).
 
