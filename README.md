@@ -4,36 +4,37 @@
 A small Go implementation of [tf-idf](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) (term frequency-inverse document frequency) with support for comparing documents using [cosine similarities](https://en.wikipedia.org/wiki/Cosine_similarity).
 
 ## Usage
-Install with `go get github.com/dkgv/go-tf-idf`.
+Install with `go get -u github.com/dkgv/go-tf-idf`.
 
 ```go
 package main
 
 import (
-	"fmt"
-	go_tf_idf "github.com/dkgv/go-tf-idf"
+    "fmt"
+    go_tf_idf "github.com/dkgv/go-tf-idf"
 )
 
 func main() {
-	// Initializing a tf-idf container 
-	doc1 := "this is a document"
-	doc2 := "and this is another document"
-	tfidf := go_tf_idf.NewWithDocuments([]string{
-		doc1,
-		doc2,
-	})
+    // Initializing a tf-idf container 
+    doc1 := "this is a document"
+    doc2 := "and this is another document"
+    tfidf := go_tf_idf.New(
+        go_tf_idf.WithDocuments([]string{doc1, doc2}),
+        go_tf_idf.WithDefaultStopWords(),
+    )
 
-	// Calculating tf-idf for a term
-	term := "document"
-	res1 := tfidf.TermFrequencyInverseDocumentFrequency(term, doc1)
-	fmt.Printf("res1 %f", res1)
+    // Calculating tf-idf for a term
+    term := "document"
+    res1 := tfidf.TermFrequencyInverseDocumentFrequency(term, doc1)
+    fmt.Printf("res1 %f", res1)
 
-	// Comparing two documents via cosine similarity
-	comparator := go_tf_idf.CosineComparator
-	similarity, err := tfidf.Compare(doc1, doc2, comparator)
-	if err != nil {
-		panic("comparison failed")
-	}
-	fmt.Printf("similarity %f", similarity)
+    // Comparing two documents via cosine similarity
+    comparator := go_tf_idf.CosineComparator
+    similarity, err := tfidf.Compare(doc1, doc2, comparator)
+    if err != nil {
+        // ...
+    }
+	
+    fmt.Printf("similarity %f", similarity)
 }
 ```

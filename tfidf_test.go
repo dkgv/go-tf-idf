@@ -69,12 +69,12 @@ func TestTfIdf_GetDocument(t *testing.T) {
 	}{
 		{
 			name:        "doc1",
-			getDocument: "doc1",
+			getDocument: doc1Content,
 			want:        &doc1,
 		},
 		{
 			name:        "doc2",
-			getDocument: "doc2",
+			getDocument: doc2Content,
 			want:        &doc2,
 		},
 		{
@@ -85,7 +85,10 @@ func TestTfIdf_GetDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{Documents: docs}
+			i := New(
+				WithDocuments([]string{doc1Content, doc2Content}),
+				WithDefaultStopWords(),
+			)
 			if got := i.GetDocument(tt.getDocument); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetDocument() = %v, want %v", got, tt.want)
 			}
@@ -271,11 +274,18 @@ func TestTfIdf_AddDocument(t *testing.T) {
 	tests := []struct {
 		name        string
 		documents   []string
+		stopWords   []string
 		wantNumDocs int
 	}{
 		{
 			name:        "add one document",
 			documents:   []string{doc1Content},
+			wantNumDocs: 1,
+		},
+		{
+			name:        "add one document",
+			documents:   []string{doc1Content},
+			stopWords:   []string{"this"},
 			wantNumDocs: 1,
 		},
 		{
@@ -291,7 +301,9 @@ func TestTfIdf_AddDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{Documents: make(map[string]Document), StopWords: NewEmptyStopWords()}
+			i := New(
+				WithStopWords(tt.stopWords),
+			)
 			for _, document := range tt.documents {
 				i.AddDocument(document)
 			}
@@ -310,7 +322,7 @@ func TestTfIdf_Compare(t *testing.T) {
 		doc1      string
 		doc2      string
 		want      float64
-		wantErr   error
+		wantErr   bool
 	}{
 		{
 			name: "compare doc1 with doc1",
@@ -320,15 +332,25 @@ func TestTfIdf_Compare(t *testing.T) {
 			doc1:    doc1Content,
 			doc2:    doc1Content,
 			want:    1,
-			wantErr: nil,
+			wantErr: false,
+		},
+		{
+			name: "compare doc1 with nil",
+			documents: map[string]Document{
+				"ebfd60f5f708658b4b5ff376d33d3393": doc1,
+			},
+			doc1:    doc1Content,
+			doc2:    "",
+			want:    0,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := TfIdf{Documents: tt.documents}
 			result, err := i.Compare(tt.doc1, tt.doc2, CosineComparator)
-			if err != tt.wantErr {
-				t.Errorf("got err %v, want %v", err, tt.wantErr)
+			if !tt.wantErr && err != nil {
+				t.Errorf("got err %v, want none", err)
 			}
 
 			if result != tt.want {
@@ -349,9 +371,9 @@ func Test_md5Hash(t *testing.T) {
 }
 
 func TestNewWithDocuments(t *testing.T) {
-	i := NewWithDocuments([]string{
-		doc1Content, doc2Content,
-	})
+	i := New(
+		WithDocuments([]string{doc1Content, doc2Content}),
+	)
 	if len(i.Documents) != 2 {
 		t.Error("invalid # of docs")
 	}

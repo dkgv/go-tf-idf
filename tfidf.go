@@ -48,30 +48,49 @@ func (d Document) GetVectors(other Document) ([]float64, []float64) {
 	return vector1, vector2
 }
 
+type Option func(idf *TfIdf)
+
+func WithStopWords(stopWords []string) Option {
+	return func(tfIdf *TfIdf) {
+		tfIdf.StopWords.AddWords(stopWords)
+	}
+}
+
+func WithDefaultStopWords() Option {
+	return func(tfIdf *TfIdf) {
+		for s, _ := range DefaultList {
+			tfIdf.StopWords.AddWord(s)
+		}
+	}
+}
+
+func WithDocuments(documents []string) Option {
+	return func(tfIdf *TfIdf) {
+		for _, document := range documents {
+			tfIdf.AddDocument(document)
+		}
+	}
+}
+
 type TfIdf struct {
 	Documents map[string]Document
 	StopWords *StopWords
 }
 
-func New() *TfIdf {
+func DefaultOptions() *TfIdf {
 	return &TfIdf{
-		Documents: make(map[string]Document),
+		Documents: make(map[string]Document, 0),
 		StopWords: NewEmptyStopWords(),
 	}
 }
 
-func NewWithDefaultStopWords() *TfIdf {
-	tfidf := New()
-	tfidf.StopWords.List = DefaultList
-	return tfidf
-}
-
-func NewWithDocuments(documents []string) *TfIdf {
-	tfidf := New()
-	for _, document := range documents {
-		tfidf.AddDocument(document)
+func New(opts ...Option) *TfIdf {
+	tfIdf := DefaultOptions()
+	for _, opt := range opts {
+		opt(tfIdf)
 	}
-	return tfidf
+
+	return tfIdf
 }
 
 type Comparator func(vector1, vector2 []float64) float64
@@ -92,6 +111,7 @@ func (i TfIdf) GetDocument(document string) *Document {
 	if doc, ok := i.Documents[hash]; ok {
 		return &doc
 	}
+
 	return nil
 }
 
