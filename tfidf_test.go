@@ -2,34 +2,33 @@ package go_tf_idf
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
 var doc1Hash = "83e4b1789306d3d1c99140df3827d600"
 var doc1Content = "this is a a sample"
-var doc1Freq = map[string]float64{
+var doc1Freq = map[string]int{
 	"this":   1,
 	"is":     1,
 	"a":      2,
 	"sample": 1,
 }
-var tokens1 = []string{"this", "is", "a", "sample"}
-var tokenCount1 = 5
-var doc1 = Document{Frequency: doc1Freq, UniqueTokens: tokens1, TotalTokenCount: tokenCount1}
+var allTokens1 = strings.Split(doc1Content, " ")
+var uniqueTokens1 = []string{"this", "is", "a", "sample"}
+var doc1 = Document{AllTokens: allTokens1, TermCount: doc1Freq, UniqueTokens: uniqueTokens1}
 
 var doc2Hash = "271559ec25268bb9bb2ad7fd8b4cf71a"
 var doc2Content = "this is another another example example example"
-var doc2Freq = map[string]float64{
+var doc2Freq = map[string]int{
 	"this":    1,
 	"is":      1,
 	"another": 2,
 	"example": 3,
 }
-var tokens2 = []string{"this", "is", "another", "example"}
-var tokenCount2 = 7
-var doc2 = Document{Frequency: doc2Freq, UniqueTokens: tokens2, TotalTokenCount: tokenCount2}
-
-var docs = map[string]Document{doc1Hash: doc1, doc2Hash: doc2}
+var allTokens2 = strings.Split(doc2Content, " ")
+var uniqueTokens2 = []string{"this", "is", "another", "example"}
+var doc2 = Document{AllTokens: allTokens2, TermCount: doc2Freq, UniqueTokens: uniqueTokens2}
 
 func TestDocument_GetVectors(t *testing.T) {
 	tests := []struct {
@@ -61,6 +60,58 @@ func TestDocument_GetVectors(t *testing.T) {
 	}
 }
 
+func TestDocument_TermFrequency(t *testing.T) {
+	tests := []struct {
+		name         string
+		frequency    map[string]int
+		term         string
+		allTokens    []string
+		uniqueTokens []string
+		want         float64
+	}{
+		{
+			name:         "'this' doc1 document frequency",
+			frequency:    doc1Freq,
+			term:         "this",
+			allTokens:    allTokens1,
+			uniqueTokens: uniqueTokens1,
+			want:         0.2,
+		},
+		{
+			name:         "'this' doc2 document frequency",
+			frequency:    doc2Freq,
+			term:         "this",
+			allTokens:    allTokens2,
+			uniqueTokens: uniqueTokens2,
+			want:         0.14285714285714285,
+		},
+		{
+			name:         "'example' doc1 document frequency",
+			frequency:    doc1Freq,
+			term:         "example",
+			allTokens:    allTokens1,
+			uniqueTokens: uniqueTokens1,
+			want:         0,
+		},
+		{
+			name:         "'example' doc2 document frequency",
+			frequency:    doc2Freq,
+			term:         "example",
+			allTokens:    allTokens2,
+			uniqueTokens: uniqueTokens2,
+			want:         0.42857142857142855,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := Document{AllTokens: tt.allTokens, TermCount: tt.frequency, UniqueTokens: tt.uniqueTokens}
+			if got := d.TermFrequency(tt.term); got != tt.want {
+				t.Errorf("TermFrequency() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestTfIdf_GetDocument(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -87,62 +138,10 @@ func TestTfIdf_GetDocument(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := New(
 				WithDocuments([]string{doc1Content, doc2Content}),
-				WithDefaultStopWords(),
 			)
-			if got := i.GetDocument(tt.getDocument); !reflect.DeepEqual(got, tt.want) {
+			got := i.GetDocument(tt.getDocument)
+			if got != tt.want && !reflect.DeepEqual(got.UniqueTokens, tt.want.UniqueTokens) {
 				t.Errorf("GetDocument() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestDocument_TermFrequency(t *testing.T) {
-	tests := []struct {
-		name       string
-		frequency  map[string]float64
-		term       string
-		tokens     []string
-		tokenCount int
-		want       float64
-	}{
-		{
-			name:       "'this' doc1 document frequency",
-			frequency:  doc1Freq,
-			term:       "this",
-			tokens:     tokens1,
-			tokenCount: tokenCount1,
-			want:       0.2,
-		},
-		{
-			name:       "'this' doc2 document frequency",
-			frequency:  doc2Freq,
-			term:       "this",
-			tokens:     tokens2,
-			tokenCount: tokenCount2,
-			want:       0.14285714285714285,
-		},
-		{
-			name:       "'example' doc1 document frequency",
-			frequency:  doc1Freq,
-			term:       "example",
-			tokens:     tokens1,
-			tokenCount: tokenCount1,
-			want:       0,
-		},
-		{
-			name:       "'example' doc2 document frequency",
-			frequency:  doc2Freq,
-			term:       "example",
-			tokens:     tokens2,
-			tokenCount: tokenCount2,
-			want:       0.42857142857142855,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := Document{Frequency: tt.frequency, UniqueTokens: tt.tokens, TotalTokenCount: tt.tokenCount}
-			if got := d.TermFrequency(tt.term); got != tt.want {
-				t.Errorf("TermFrequency() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -151,29 +150,28 @@ func TestDocument_TermFrequency(t *testing.T) {
 func TestTfIdf_InverseDocumentFrequency(t *testing.T) {
 	tests := []struct {
 		name      string
-		documents map[string]Document
+		documents []string
 		term      string
 		want      float64
 	}{
 		{
 			name:      "'this' inverse document frequency",
-			documents: docs,
+			documents: []string{doc1Content, doc2Content},
 			term:      "this",
 			want:      0,
 		},
 		{
 			name:      "'example' inverse document frequency",
-			documents: docs,
+			documents: []string{doc1Content, doc2Content},
 			term:      "example",
 			want:      0.3010299956639812,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{
-				Documents: tt.documents,
-				StopWords: NewEmptyStopWords(),
-			}
+			i := New(
+				WithDocuments(tt.documents),
+			)
 			if got := i.InverseDocumentFrequency(tt.term); got != tt.want {
 				t.Errorf("InverseDocumentFrequency() = %v, want %v", got, tt.want)
 			}
@@ -181,10 +179,9 @@ func TestTfIdf_InverseDocumentFrequency(t *testing.T) {
 	}
 }
 
-func TestTfIdf_TermFrequencyInverseDocumentFrequency(t *testing.T) {
+func TestTfIdf_TermFrequencyInverseDocumentFrequencyForTerm(t *testing.T) {
 	type fields struct {
-		documents map[string]Document
-		stopWords map[string]bool
+		documents []string
 	}
 	type args struct {
 		term     string
@@ -199,56 +196,51 @@ func TestTfIdf_TermFrequencyInverseDocumentFrequency(t *testing.T) {
 		{
 			name: "'this' term frequency inverse document frequency doc1",
 			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
+				documents: []string{doc1Content, doc2Content},
 			},
 			args: args{
 				term:     "this",
-				document: "doc1",
+				document: doc1Content,
 			},
 			want: 0,
 		},
 		{
 			name: "'this' term frequency inverse document frequency doc2",
 			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
+				documents: []string{doc1Content, doc2Content},
 			},
 			args: args{
 				term:     "this",
-				document: "doc2",
+				document: doc2Content,
 			},
 			want: 0,
 		},
 		{
 			name: "'example' term frequency inverse document frequency doc1",
 			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
+				documents: []string{doc1Content, doc2Content},
 			},
 			args: args{
 				term:     "example",
-				document: "doc1",
+				document: doc1Content,
 			},
 			want: 0,
 		},
 		{
 			name: "'example' term frequency inverse document frequency doc2",
 			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
+				documents: []string{doc1Content, doc2Content},
 			},
 			args: args{
 				term:     "example",
-				document: "doc2",
+				document: doc2Content,
 			},
 			want: 0.12901285528456335,
 		},
 		{
 			name: "non existent document",
 			fields: fields{
-				documents: docs,
-				stopWords: map[string]bool{},
+				documents: []string{doc1Content, doc2Content},
 			},
 			args: args{
 				term:     "example",
@@ -259,12 +251,11 @@ func TestTfIdf_TermFrequencyInverseDocumentFrequency(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{
-				Documents: tt.fields.documents,
-				StopWords: NewEmptyStopWords(),
-			}
-			if got := i.TermFrequencyInverseDocumentFrequency(tt.args.term, tt.args.document); got != tt.want {
-				t.Errorf("TermFrequencyInverseDocumentFrequency() = %v, want %v", got, tt.want)
+			i := New(
+				WithDocuments(tt.fields.documents),
+			)
+			if got := i.TermFrequencyInverseDocumentFrequencyForTerm(tt.args.term, tt.args.document); got != tt.want {
+				t.Errorf("TermFrequencyInverseDocumentFrequencyForTerm() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -375,5 +366,82 @@ func TestNewWithDocuments(t *testing.T) {
 	)
 	if len(i.Documents) != 2 {
 		t.Error("invalid # of docs")
+	}
+}
+
+func TestTfIdf_TermFrequencyInverseDocumentFrequencyForDocument(t *testing.T) {
+	type fields struct {
+		Options []Option
+	}
+	type args struct {
+		document string
+	}
+	documents := []string{
+		doc1Content,
+		doc2Content,
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []float64
+	}{
+		{
+			name: "doc1",
+			fields: fields{
+				Options: []Option{
+					WithDocuments(documents),
+				},
+			},
+			args: args{
+				document: documents[0],
+			},
+			want: []float64{0, 0, 0.12041199826559248, 0.06020599913279624, 0, 0},
+		},
+		{
+			name: "doc1 with stopwords",
+			fields: fields{
+				Options: []Option{
+					WithDocuments(documents),
+					WithDefaultStopWords(),
+				},
+			},
+			args: args{
+				document: documents[0],
+			},
+			want: []float64{0, 0, 0.12041199826559248, 0.06020599913279624, 0, 0},
+		},
+		{
+			name: "doc2",
+			fields: fields{
+				Options: []Option{
+					WithDocuments(documents),
+				},
+			},
+			args: args{
+				document: documents[1],
+			},
+			want: []float64{0, 0, 0, 0, 0.08600857018970891, 0.12901285528456335},
+		},
+		{
+			name: "nil document",
+			fields: fields{
+				Options: []Option{
+					WithDocuments(documents),
+				},
+			},
+			args: args{
+				document: "asdfasdf",
+			},
+			want: []float64{0, 0, 0, 0, 0, 0},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := New(tt.fields.Options...)
+			if got := i.TermFrequencyInverseDocumentFrequencyForDocument(tt.args.document); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TermFrequencyInverseDocumentFrequencyForDocument() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

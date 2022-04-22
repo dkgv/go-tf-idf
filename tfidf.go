@@ -38,16 +38,20 @@ func WithComparator(comparator Comparator) Option {
 }
 
 type TfIdf struct {
-	comparator Comparator
-	Documents  map[string]Document
-	StopWords  *StopWords
+	Documents              map[string]Document
+	StopWords              *StopWords
+	comparator             Comparator
+	termToIndex            map[string]int
+	documentsWithTermCount map[string]int
 }
 
 func DefaultOptions() *TfIdf {
 	return &TfIdf{
-		Documents:  make(map[string]Document, 0),
-		StopWords:  NewEmptyStopWords(),
-		comparator: CosineComparator,
+		Documents:              make(map[string]Document, 0),
+		StopWords:              NewEmptyStopWords(),
+		comparator:             CosineComparator,
+		termToIndex:            make(map[string]int, 0),
+		documentsWithTermCount: make(map[string]int, 0),
 	}
 }
 
@@ -61,16 +65,16 @@ func New(opts ...Option) *TfIdf {
 }
 
 type Document struct {
-	Frequency       map[string]float64
-	UniqueTokens    []string
-	TotalTokenCount int
+	AllTokens    []string
+	TermCount    map[string]int
+	UniqueTokens []string
 }
 
 func (d Document) TermFrequency(term string) float64 {
-	if _, ok := d.Frequency[term]; !ok {
+	if _, ok := d.TermCount[term]; !ok {
 		return 0
 	}
-	return d.Frequency[term] / (float64)(d.TotalTokenCount)
+	return float64(d.TermCount[term]) / float64(len(d.AllTokens))
 }
 
 func (d Document) GetVectors(other Document) ([]float64, []float64) {
@@ -124,24 +128,33 @@ func (i TfIdf) GetDocument(document string) *Document {
 }
 
 func (i TfIdf) InverseDocumentFrequency(term string) float64 {
-	tf := float64(0)
-	for _, document := range i.Documents {
-		if _, ok := document.Frequency[term]; ok {
-			tf++
-		}
-	}
-
-	numerator := (float64)(len(i.Documents))
-	return math.Log10(numerator / tf)
+	termCount := i.documentsWithTermCount[term]
+	documentCount := len(i.Documents)
+	return math.Log10(float64(documentCount) / float64(termCount))
 }
 
-func (i TfIdf) TermFrequencyInverseDocumentFrequency(term string, document string) float64 {
+func (i TfIdf) TermFrequencyInverseDocumentFrequencyForTerm(term string, document string) float64 {
 	doc := i.GetDocument(document)
 	if doc == nil {
 		return 0
 	}
-
 	return doc.TermFrequency(term) * i.InverseDocumentFrequency(term)
+}
+
+func (i TfIdf) TermFrequencyInverseDocumentFrequencyForDocument(document string) []float64 {
+	vec := make([]float64, len(i.termToIndex))
+	doc := i.GetDocument(document)
+	if doc == nil {
+		return vec
+	}
+
+	for _, term := range doc.AllTokens {
+		idf := i.InverseDocumentFrequency(term)
+		tfidf := doc.TermFrequency(term) * idf
+		vec[i.termToIndex[term]] = tfidf
+	}
+
+	return vec
 }
 
 func (i TfIdf) AddDocument(document string) {
@@ -150,29 +163,34 @@ func (i TfIdf) AddDocument(document string) {
 		return
 	}
 
-	tokens := Tokenize(document)
-	if len(tokens) == 0 {
+	allTokens := Tokenize(document)
+	if len(allTokens) == 0 {
 		return
 	}
 
-	frequency := make(map[string]float64, len(tokens))
+	termCount := make(map[string]int, 0)
 	uniqueTokens := make([]string, 0)
-	for _, token := range tokens {
+	for _, token := range allTokens {
 		if i.StopWords.Matches(token) {
 			continue
 		}
 
-		frequency[token]++
+		termCount[token]++
 
-		if frequency[token] == 1 {
+		if termCount[token] == 1 {
 			uniqueTokens = append(uniqueTokens, token)
+			i.documentsWithTermCount[token]++
+		}
+
+		if _, ok := i.termToIndex[token]; !ok {
+			i.termToIndex[token] = len(i.termToIndex)
 		}
 	}
 
 	i.Documents[hash] = Document{
-		Frequency:       frequency,
-		UniqueTokens:    uniqueTokens,
-		TotalTokenCount: len(tokens),
+		AllTokens:    allTokens,
+		UniqueTokens: uniqueTokens,
+		TermCount:    termCount,
 	}
 }
 

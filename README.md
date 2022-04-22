@@ -25,7 +25,7 @@ func main() {
 
     // Calculating tf-idf for a term
     term := "document"
-    res1 := tfidf.TermFrequencyInverseDocumentFrequency(term, doc1)
+    res1 := tfidf.TermFrequencyInverseDocumentFrequencyForTerm(term, doc1)
     fmt.Printf("res1 %f", res1)
 
     // Comparing two documents via cosine similarity
