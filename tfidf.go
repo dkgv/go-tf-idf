@@ -31,15 +31,23 @@ func WithDocuments(documents []string) Option {
 	}
 }
 
+func WithComparator(comparator Comparator) Option {
+	return func(tfIdf *TfIdf) {
+		tfIdf.comparator = comparator
+	}
+}
+
 type TfIdf struct {
-	Documents map[string]Document
-	StopWords *StopWords
+	comparator Comparator
+	Documents  map[string]Document
+	StopWords  *StopWords
 }
 
 func DefaultOptions() *TfIdf {
 	return &TfIdf{
-		Documents: make(map[string]Document, 0),
-		StopWords: NewEmptyStopWords(),
+		Documents:  make(map[string]Document, 0),
+		StopWords:  NewEmptyStopWords(),
+		comparator: CosineComparator,
 	}
 }
 
@@ -95,7 +103,7 @@ func (d Document) GetVectors(other Document) ([]float64, []float64) {
 
 type Comparator func(vector1, vector2 []float64) float64
 
-func (i TfIdf) Compare(document1, document2 string, comparator Comparator) (float64, error) {
+func (i TfIdf) Compare(document1, document2 string) (float64, error) {
 	doc1 := i.GetDocument(document1)
 	doc2 := i.GetDocument(document2)
 	if doc1 == nil || doc2 == nil {
@@ -103,7 +111,7 @@ func (i TfIdf) Compare(document1, document2 string, comparator Comparator) (floa
 	}
 
 	vector1, vector2 := doc1.GetVectors(*doc2)
-	return comparator(vector1, vector2), nil
+	return i.comparator(vector1, vector2), nil
 }
 
 func (i TfIdf) GetDocument(document string) *Document {

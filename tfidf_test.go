@@ -318,37 +318,36 @@ func TestTfIdf_AddDocument(t *testing.T) {
 func TestTfIdf_Compare(t *testing.T) {
 	tests := []struct {
 		name      string
-		documents map[string]Document
+		documents []string
 		doc1      string
 		doc2      string
 		want      float64
 		wantErr   bool
 	}{
 		{
-			name: "compare doc1 with doc1",
-			documents: map[string]Document{
-				"ebfd60f5f708658b4b5ff376d33d3393": doc1,
-			},
-			doc1:    doc1Content,
-			doc2:    doc1Content,
-			want:    1,
-			wantErr: false,
+			name:      "cosine compare doc1 with doc1",
+			documents: []string{doc1Content},
+			doc1:      doc1Content,
+			doc2:      doc1Content,
+			want:      1,
+			wantErr:   false,
 		},
 		{
-			name: "compare doc1 with nil",
-			documents: map[string]Document{
-				"ebfd60f5f708658b4b5ff376d33d3393": doc1,
-			},
-			doc1:    doc1Content,
-			doc2:    "",
-			want:    0,
-			wantErr: true,
+			name:      "cosine compare doc1 with nil",
+			documents: []string{doc1Content},
+			doc1:      doc1Content,
+			doc2:      "",
+			want:      0,
+			wantErr:   true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := TfIdf{Documents: tt.documents}
-			result, err := i.Compare(tt.doc1, tt.doc2, CosineComparator)
+			i := New(
+				WithDocuments(tt.documents),
+				WithComparator(CosineComparator),
+			)
+			result, err := i.Compare(tt.doc1, tt.doc2)
 			if !tt.wantErr && err != nil {
 				t.Errorf("got err %v, want none", err)
 			}

@@ -1,7 +1,6 @@
 package go_tf_idf
 
 import (
-	"strconv"
 	"testing"
 )
 
@@ -32,10 +31,10 @@ func TestCosineComparator(t *testing.T) {
 			want: 0.7694486109646872,
 		},
 	}
-	for i, tt := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run("cosine comparison", func(t *testing.T) {
 			if got := CosineComparator(tt.vec1, tt.vec2); got != tt.want {
-				t.Errorf("Cosine() = %v, want %v", got, tt.want)
+				t.Errorf("Compare() = %v, want %v", got, tt.want)
 			}
 		})
 	}
